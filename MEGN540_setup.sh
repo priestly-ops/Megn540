@@ -3,7 +3,7 @@ sudo apt update
 sudo apt upgrade -y
 
 # INSTALL PROGRAMMING APPS & LIBS: GIT (version control), MELD (file differences), code (Visual Studio Code), AND AVRDUDE (avr programming)
-sudo apt install -y build-essential git meld gcc-avr avr-libc avrdude code cmake clang-format-10 doxygen
+sudo apt install -y build-essential git meld gcc-avr avr-libc avrdude code cmake clang-format doxygen
 
 # INSTALL VSCODE Extensions
 code --install-extension ms-vscode.cpptools 
@@ -21,9 +21,9 @@ code --install-extension cschlosser.doxdocgen
 sudo apt install -y ffmpeg vokoscreen
 
 # CLONE CLASS REPOS AND SETUP FILE SYSTEM
-cd ~/Desktop
-git clone https://github.com/M3R-CSM/MEGN540.git
-cd MEGN540
+# cd ~/Desktop
+# git clone https://github.com/M3R-CSM/MEGN540.git
+# cd MEGN540
 git submodule update --init --recursive
 mkdir BIN
 bash SerialMonitor/install_dep.sh
