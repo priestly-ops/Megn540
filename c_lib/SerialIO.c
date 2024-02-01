@@ -142,48 +142,48 @@ void Task_USB_Upkeep()
  */
 void Task_USB_Echo( void )
 {
-    /* Device must be connected and configured for the task to run */
-    if( USB_DeviceState != DEVICE_STATE_Configured )
-        return;
+    // /* Device must be connected and configured for the task to run */
+    // if( USB_DeviceState != DEVICE_STATE_Configured )
+    //     return;
 
-    /* Select the Serial Rx Endpoint */
-    Endpoint_SelectEndpoint( CDC_RX_EPADDR );
+    // /* Select the Serial Rx Endpoint */
+    // Endpoint_SelectEndpoint( CDC_RX_EPADDR );
 
-    /* Check to see if any data has been received */
-    if( rb_length_B( &_usb_send_buffer ) > 0 ) {
-        /* Create a temp buffer big enough to hold the incoming endpoint packet */
-        uint8_t Buffer[Endpoint_BytesInEndpoint()];
+    // /* Check to see if any data has been received */
+    // if( rb_length_B( &_usb_send_buffer ) > 0 ) {
+    //     /* Create a temp buffer big enough to hold the incoming endpoint packet */
+    //     uint8_t Buffer[Endpoint_BytesInEndpoint()];
 
-        /* Remember how large the incoming packet is */
-        uint16_t DataLength = Endpoint_BytesInEndpoint();
+    //     /* Remember how large the incoming packet is */
+    //     uint16_t DataLength = Endpoint_BytesInEndpoint();
 
-        /* Read in the incoming packet into the buffer */
-        Endpoint_Read_Stream_LE( &Buffer, DataLength, NULL );
+    //     /* Read in the incoming packet into the buffer */
+    //     Endpoint_Read_Stream_LE( &Buffer, DataLength, NULL );
 
-        /* Finalize the stream transfer to send the last packet */
-        Endpoint_ClearOUT();
+    //     /* Finalize the stream transfer to send the last packet */
+    //     Endpoint_ClearOUT();
 
-        for( int i = 0; i < DataLength; i++ ) {
-            USB_Send_Byte( Buffer[i] );
-        }
+    //     for( int i = 0; i < DataLength; i++ ) {
+    //         USB_Send_Byte( Buffer[i] );
+    //     }
 
-        uint8_t nextByte = rb_pop_front_B( &_usb_send_buffer );
+    //     uint8_t nextByte = rb_pop_front_B( &_usb_send_buffer );
 
-        /* Select the Serial Tx Endpoint */
-        Endpoint_SelectEndpoint( CDC_TX_EPADDR );
+    //     /* Select the Serial Tx Endpoint */
+    //     Endpoint_SelectEndpoint( CDC_TX_EPADDR );
 
-        /* Write the received data to the endpoint */
-        Endpoint_Write_8( nextByte );
+    //     /* Write the received data to the endpoint */
+    //     Endpoint_Write_8( nextByte );
 
-        /* Finalize the stream transfer to send the last packet */
-        Endpoint_ClearIN();
+    //     /* Finalize the stream transfer to send the last packet */
+    //     Endpoint_ClearIN();
 
-        /* Wait until the endpoint is ready for the next packet */
-        Endpoint_WaitUntilReady();
+    //     /* Wait until the endpoint is ready for the next packet */
+    //     Endpoint_WaitUntilReady();
 
-        /* Send an empty packet to prevent host buffering */
-        Endpoint_ClearIN();
-    }
+    //     /* Send an empty packet to prevent host buffering */
+    //     Endpoint_ClearIN();
+    // }
 
     // ************** MEGN540 FOR DEBUGGING ***************** //
     // once you get your _USB_Read_Data and _USB_Write_Data to work with your ring buffers
@@ -350,7 +350,7 @@ void USB_Flush_Input_Buffer()
     // *** MEGN540  ***
     // YOUR CODE HERE
     // This should only interface with the ring buffers and use your ring buffer functions.
-    _usb_receive_buffer.end_index = _usb_receive_buffer.start_index;
+    rb_initialize_B( &_usb_receive_buffer );
 }
 
 /** Configures the board hardware and chip peripherals for the demo's functionality. */

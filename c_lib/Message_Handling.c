@@ -172,13 +172,28 @@ void Task_Message_Handling( float _time_since_last )
             break;
         case '~':
             if( USB_Msg_Length() >= _Message_Length( '~' ) ) {
-                // then process your reset by setting the task_restart flag defined in Lab1_Tasks.h
+                // then process your reset by setting the task_restart flag defined in Lab1_Tasks.h4
+
+                // remove the command from the usb recieved buffer using the
+                // usb_msg_get() function
+                USB_Msg_Get();  // removes the first character from the received buffer,
+                                // we already know it was a * so no need to save it as a
+                                // variable
+
+                Task_Activate( &task_restart, -1 );
 
                 // /* MEGN540 -- LAB 2 */ command_processed = true;
             }
             break;
         default:
             // What to do if you dont recognize the command character
+
+            // reset USB input buffers
+            USB_Flush_Input_Buffer();
+
+            // respond with a ?
+            USB_Send_Byte( '?' );
+
             break;
     }
 
