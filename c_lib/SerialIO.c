@@ -269,6 +269,10 @@ void USB_Send_Msg( char* format, char cmd, void* p_data, uint8_t data_len )
     //      usb_send_byte <-- cmd
     //      usb_send_data <-- p_data
     // FUNCTION END
+    if( cmd == '\x00' ) {
+        cmd = '?';
+    }
+
     uint8_t format_len = strnlen( format, 255 - 1 ) + 1;
     // if( 255 - format_len < 1 + data_len ) {
     //     return 1;  // return error: msg_length variable cannot be greater than 255

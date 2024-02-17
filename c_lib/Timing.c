@@ -54,9 +54,33 @@ void Initialize_Timing()
     // YOUR CODE HERE
     // Enable timing, setup prescalers, etc.
 
+    // Set timer 0 to normal operating mode
+    TCCR0A |= ( 0 << COM0A0 );
+    TCCR0A |= ( 0 << COM0A1 );
+
+    // Set prescaler
+    TCCR0B |= ( 1 << CS00 );
+    TCCR0B |= ( 1 << CS01 );
+
+    // sets counter
+    TCNT0 = 0;
+
+    // number to compare
+    OCR0A = 249;
+
+    // Comparer
+    TIMSK0 |= ( 1 << OCIE0A );
+    sei();  // enables interupts
     _count_ms = 0;
+
+    // Clears on a correct compare
+    TCCR0A |= ( 1 << WGM01 );
 }
 
+float Time_t_to_Seconds( const Time_t* time )
+{
+    return ( time->millisec * 1e-3 ) + ( time->microsec * 1e-6 );
+}
 /**
  * This function gets the current time and returns it in a Time_t structure.
  * @return
@@ -65,15 +89,16 @@ float Timing_Get_Time_Sec()
 {
     // *** MEGN540 Lab 2 ***
     // YOUR CODE HERE
-    return 0;
+    Time_t time = Timing_Get_Time();
+    return Time_t_to_Seconds( &time );
 }
 Time_t Timing_Get_Time()
 {
     // *** MEGN540 Lab 2 ***
     // YOUR CODE HERE
     Time_t time = {
-        .millisec = _count_ms,
-        .microsec = 0  // YOU NEED TO REPLACE THIS WITH A CALL TO THE TIMER0 REGISTER AND MULTIPLY APPROPRIATELY
+        .millisec = Timing_Get_Milli(),
+        .microsec = Timing_Get_Micro()  // YOU NEED TO REPLACE THIS WITH A CALL TO THE TIMER0 REGISTER AND MULTIPLY APPROPRIATELY
     };
 
     return time;
@@ -92,7 +117,7 @@ uint16_t Timing_Get_Micro()
 {
     // *** MEGN540 Lab 2 ***
     // YOUR CODE HERE
-    return 0;  // YOU NEED TO REPLACE THIS WITH A CALL TO THE TIMER0 REGISTER AND MULTIPLY APPROPRIATELY
+    return TCNT0 * 4;  // YOU NEED TO REPLACE THIS WITH A CALL TO THE TIMER0 REGISTER AND MULTIPLY APPROPRIATELY
 }
 
 /**
@@ -104,20 +129,19 @@ float Timing_Seconds_Since( const Time_t* time_start_p )
 {
     // *** MEGN540 Lab 2 ***
     // YOUR CODE HERE
-    float delta_time = 0;
+    float delta_time = Timing_Get_Time_Sec() - Time_t_to_Seconds( time_start_p );
     return delta_time;
 }
 
 /** This is the Interrupt Service Routine for the Timer0 Compare A feature.
  * You'll need to set the compare flags properly for it to work.
  */
-/*ISR( DEFINE THE COMPARISON TRIGGER )
+ISR( TIMER0_COMPA_vect )
 {
     // *** MEGN540 Lab 2 ***
     // YOUR CODE HERE
     // YOU NEED TO RESET THE Timer0 Value to 0 again!
 
     // take care of upticks of both our internal and external variables.
-    _count_ms ++;
-
-}*/
+    _count_ms++;
+}

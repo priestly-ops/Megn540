@@ -45,6 +45,8 @@
 #include "Lab4_Tasks.h"
 #include "Lab5_Tasks.h"
 
+#define watchdog_timer 0.1
+
 /**
  * Function Task_Message_Handling processes USB messages as necessary and sets status flags to control the flow of the program.
  */

@@ -58,7 +58,8 @@ void Task_Message_Handling( float _time_since_last )
     // bytes yet, the command persists
     char command = USB_Msg_Peek();
 
-    // /* MEGN540 -- LAB 2 */ bool command_processed = false;
+    // /* MEGN540 -- LAB 2 */
+    bool command_processed = false;
 
     // process command
     switch( command ) {
@@ -86,7 +87,8 @@ void Task_Message_Handling( float _time_since_last )
                 // Call MEGN540_Lab_Task Function
                 Multiply_And_Send( data.v1, data.v2 );
 
-                // /* MEGN540 -- LAB 2 */ command_processed = true;
+                // /* MEGN540 -- LAB 2 */
+                command_processed = true;
             }
             break;
         case '/':
@@ -113,7 +115,8 @@ void Task_Message_Handling( float _time_since_last )
                 // Call MEGN540_Lab_Task Function
                 Divide_And_Send( data.v1, data.v2 );
 
-                // /* MEGN540 -- LAB 2 */ command_processed = true;
+                // /* MEGN540 -- LAB 2 */
+                command_processed = true;
             }
             break;
         case '+':
@@ -140,7 +143,8 @@ void Task_Message_Handling( float _time_since_last )
                 // Call MEGN540_Lab_Task Function
                 Add_And_Send( data.v1, data.v2 );
 
-                // /* MEGN540 -- LAB 2 */ command_processed = true;
+                // /* MEGN540 -- LAB 2 */
+                command_processed = true;
             }
             break;
         case '-':
@@ -167,12 +171,26 @@ void Task_Message_Handling( float _time_since_last )
                 // Call MEGN540_Lab_Task Function
                 Subtract_And_Send( data.v1, data.v2 );
 
-                // /* MEGN540 -- LAB 2 */ command_processed = true;
+                // /* MEGN540 -- LAB 2 */
+                command_processed = true;
             }
             break;
         case '~':
             if( USB_Msg_Length() >= _Message_Length( '~' ) ) {
                 // then process your reset by setting the task_restart flag defined in Lab1_Tasks.h4
+                Task_Activate( &task_restart, -1 );
+
+                // respond with a 0
+                int8_t zero = 0;
+                USB_Send_Msg( "cb", '~', &zero, sizeof( zero ) );
+
+                // /* MEGN540 -- LAB 2 */
+                command_processed = true;
+            }
+            break;
+        case 't':
+            if( USB_Msg_Length() >= _Message_Length( 't' ) ) {
+                // then process your plus...
 
                 // remove the command from the usb recieved buffer using the
                 // usb_msg_get() function
@@ -180,28 +198,85 @@ void Task_Message_Handling( float _time_since_last )
                                 // we already know it was a * so no need to save it as a
                                 // variable
 
-                Task_Activate( &task_restart, -1 );
+                // Build a meaningful structure to put your data in. Here we want one char
+                struct __attribute__( ( __packed__ ) ) {
+                    char c;
+                } data;
 
-                // /* MEGN540 -- LAB 2 */ command_processed = true;
+                // Copy the bytes from the usb receive buffer into our structure so we
+                // can use the information
+                USB_Msg_Read_Into( &data, sizeof( data ) );
+
+                // Call MEGN540_Lab_Task Function
+                switch( data.c ) {
+                    case 0: Send_Time_Now( _time_since_last, command ); break;
+                    case 1: Send_Loop_Time( _time_since_last, command ); break;
+                    default: break;
+                }
+
+                // /* MEGN540 -- LAB 2 */
+                command_processed = true;
+            }
+            break;
+        case 'T':
+            if( USB_Msg_Length() >= _Message_Length( 'T' ) ) {
+                // then process your plus...
+
+                // remove the command from the usb recieved buffer using the
+                // usb_msg_get() function
+                USB_Msg_Get();  // removes the first character from the received buffer,
+                                // we already know it was a * so no need to save it as a
+                                // variable
+
+                // Build a meaningful structure to put your data in. Here we want one char
+                struct __attribute__( ( __packed__ ) ) {
+                    char c;
+                    float f;
+                } data;
+
+                // Copy the bytes from the usb receive buffer into our structure so we
+                // can use the information
+                USB_Msg_Read_Into( &data, sizeof( data ) );
+
+                // convert data.f from milliseconds to seconds
+                data.f *= 1e-3;
+
+                // Call MEGN540_Lab_Task Function
+                switch( data.c ) {
+                    case 0:
+                        Send_Time_Now( _time_since_last, command );
+                        Task_Activate( &task_send_time, data.f );
+                        break;
+                    case 1:
+                        Send_Loop_Time( _time_since_last, command );
+                        task_time_loop_send_period = data.f;
+                        task_time_loop_last        = Timing_Get_Time();
+                        Task_Activate( &task_time_loop, 0 );
+                        break;
+                    default: break;
+                }
+
+                // /* MEGN540 -- LAB 2 */
+                command_processed = true;
             }
             break;
         default:
             // What to do if you dont recognize the command character
 
-            // reset USB input buffers
-            USB_Flush_Input_Buffer();
-
             // respond with a ?
+            USB_Msg_Get();
+            USB_Send_Byte( 3 );
+            USB_Send_Str( "c" );
             USB_Send_Byte( '?' );
 
             break;
     }
 
     //********* MEGN540 -- LAB 2 ************//
-    // if( command_processed ) {
-    //     // RESET the WATCHDOG TIMER
-    //     Task_Activate( &task_message_handling_watchdog );
-    // }
+    if( command_processed ) {
+        // RESET the WATCHDOG TIMER
+        Task_Activate( &task_message_handling_watchdog, watchdog_timer );  // watchdog waits 100ms for a complete command
+    }
 }
 
 /**

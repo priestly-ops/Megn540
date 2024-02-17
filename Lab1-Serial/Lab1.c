@@ -47,7 +47,7 @@ void Initialize_Modules( float _not_used_ )
     // Initialize Tasks and their associated funciton connections
     Initialize_Task( &task_restart, Initialize_Modules );
 
-    // once you have everythign else working  you can setup the message handling task to be managed by our task management
+    // once you have everything else working you can setup the message handling task to be managed by our task management
     Initialize_Task( &task_message_handling, Task_Message_Handling );
     Task_Activate( &task_message_handling, 0 );
 }

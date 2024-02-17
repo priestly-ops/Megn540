@@ -22,8 +22,9 @@ void Task_Activate( Task_t* task, float run_period )
     // Here you should change the state of the is_active member and set the time to now (lab 2)
     // to identify the task is active
     // set the run_period as proscribed
-    task->is_active  = true;
-    task->run_period = run_period;
+    task->is_active     = true;
+    task->run_period    = run_period;
+    task->time_last_ran = Timing_Get_Time();
 }
 
 /**
@@ -37,7 +38,7 @@ void Task_ReActivate( Task_t* task )
     //****** MEGN540 --  START IN LAB 1, UPDATE IN Lab 2 ******//
     // Here you should change the state of the is_active member and set the time to now (lab 2)
     // to identify the task is active
-    task->is_active = true;
+    Task_Activate( task, task->run_period );
 }
 
 /** Function Task_Cancel changes the internal state to disable the task **/
@@ -49,6 +50,11 @@ void Task_Cancel( Task_t* task )
     task->is_active = false;
 }
 
+float Task_Sec_Since( Task_t* task )
+{
+    return Timing_Seconds_Since( &( task->time_last_ran ) );
+}
+
 /** Function Task_Is_Ready indicates if the task should be run. It checks both
  * the active status and the timing.
  */
@@ -56,7 +62,7 @@ bool Task_Is_Ready( Task_t* task )
 {
     //****** MEGN540 --  START IN LAB 1, UPDATE IN Lab 2 ******//
     // Note a run_period of 0 indicates the task should be run every time if it is active.
-    return task->is_active;  // MEGN540 Update to set the return statement based on is_active and time_last_ran.
+    return task->is_active && Task_Sec_Since( task ) >= task->run_period;  // MEGN540 Update to set the return statement based on is_active and time_last_ran.
 }
 
 /**
@@ -73,11 +79,12 @@ void Task_Run( Task_t* task )
     // Note that a negative run_period indicates the task should only be performed once, while
     // a run_period of 0 indicates the task should be run every time if it is active.
     if( task->task_fcn_ptr ) {
-        task->task_fcn_ptr( 0.0 );  // You may need to pass the elapsed time since last run
+        task->task_fcn_ptr( Task_Sec_Since( task ) );  // You may need to pass the elapsed time since last run
     }
     // Update time_last_ran to the current time (use Timing functions)
-    if( task->run_period == -1 ) {
-        task->is_active = false;  // Deactivate if run_period is -1
+    task->time_last_ran = Timing_Get_Time();
+    if( task->run_period < 0 ) {
+        Task_Cancel( task );  // Deactivate if run_period is -1
     }
 }
 
