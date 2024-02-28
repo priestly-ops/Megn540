@@ -49,7 +49,16 @@
  */
 void Filter_Init( Filter_Data_t* p_filt, float* numerator_coeffs, float* denominator_coeffs, uint8_t order )
 {
-    return;
+    rb_initialize_F( &p_filt->numerator );
+    rb_initialize_F( &p_filt->denominator );
+    rb_initialize_F( &p_filt->in_list );
+    rb_initialize_F( &p_filt->out_list );
+    for( uint8_t i = 0; i < order + 1; i++ ) {
+        rb_push_back_F( &p_filt->numerator, numerator_coeffs[i] );
+        rb_push_back_F( &p_filt->denominator, denominator_coeffs[i] );
+        rb_push_front_F( &p_filt->in_list, 0.0 );
+        rb_push_front_F( &p_filt->out_list, 0.0 );
+    }
 }
 
 /**
@@ -60,7 +69,14 @@ void Filter_Init( Filter_Data_t* p_filt, float* numerator_coeffs, float* denomin
  */
 void Filter_ShiftBy( Filter_Data_t* p_filt, float shift_amount )
 {
-    return;
+    for( uint8_t i = 0; i < rb_length_F( &p_filt->in_list ); i++ ) {
+        float in_val = rb_get_F( &p_filt->in_list, i );
+        rb_set_F( &p_filt->in_list, i, in_val + shift_amount );
+    }
+    for( uint8_t i = 0; i < rb_length_F( &p_filt->out_list ); i++ ) {
+        float out_val = rb_get_F( &p_filt->out_list, i );
+        rb_set_F( &p_filt->out_list, i, out_val + shift_amount );
+    }
 }
 
 /**
@@ -71,7 +87,12 @@ void Filter_ShiftBy( Filter_Data_t* p_filt, float shift_amount )
  */
 void Filter_SetTo( Filter_Data_t* p_filt, float amount )
 {
-    return;
+    for( uint8_t i = 0; i < rb_length_F( &p_filt->in_list ); i++ ) {
+        rb_set_F( &p_filt->in_list, i, amount );
+    }
+    for( uint8_t i = 0; i < rb_length_F( &p_filt->out_list ); i++ ) {
+        rb_set_F( &p_filt->out_list, i, amount );
+    }
 }
 
 /**
@@ -82,7 +103,11 @@ void Filter_SetTo( Filter_Data_t* p_filt, float amount )
  */
 float Filter_Value( Filter_Data_t* p_filt, float value )
 {
-    return 0;
+    rb_pop_back_F( &p_filt->in_list );
+    rb_pop_back_F( &p_filt->out_list );
+    rb_push_front_F( &p_filt->in_list, value );
+    rb_push_front_F( &p_filt->out_list, 0.0 );
+    return Filter_Last_Output( p_filt );
 }
 
 /**
@@ -91,5 +116,16 @@ float Filter_Value( Filter_Data_t* p_filt, float value )
  */
 float Filter_Last_Output( Filter_Data_t* p_filt )
 {
-    return 0;
+    float num_sum = 0;
+    for( uint8_t i = 0; i < rb_length_F( &p_filt->numerator ); i++ ) {
+        num_sum += rb_get_F( &p_filt->numerator, i ) * rb_get_F( &p_filt->in_list, i );
+    }
+    float den_sum = 0;
+    for( uint8_t i = 1; i < rb_length_F( &p_filt->denominator ); i++ ) {
+        den_sum += rb_get_F( &p_filt->denominator, i ) * rb_get_F( &p_filt->out_list, i );
+    }
+    float den_0   = rb_get_F( &p_filt->denominator, 0 );
+    float new_val = ( num_sum - den_sum ) / den_0;
+    rb_set_F( &p_filt->out_list, 0, new_val );
+    return rb_get_F( &p_filt->out_list, 0 );
 }
